@@ -1,0 +1,16 @@
+{
+  "hash": "38591f86be66dcc1372a56fb130ab55f",
+  "result": {
+    "markdown": "---\ntitle: \"Repairing Dallas Report Insights\"\n---\n\n\n\n\n#### Question Summaries and Breakdowns\n\nThis document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity.\n\nWhite Non-Hispanic, Hispanic or Latino, and Black or African American are the main groups being shown on these images, because other groups only accounted for a total of 5 responses and were thusly excluded.\n\nNumbers generated in this are intended to be used in a Repairing Dallas report.\n\n## Survey Responses by Demographics\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Poverty-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Children-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Over 65-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Under 6-1.png){width=2700}\n:::\n:::\n\n\n## Survey Responses by Safety Items\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by CO Detector-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Fire Extinguisher-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Smoke Detector-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Air Filter-1.png){width=2700}\n:::\n:::\n\n\n## Survey Responses by Home Status\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Home Status-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Temperature Control in Summer-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Temperature Control in Winter-1.png){width=2700}\n:::\n:::\n\n\n## Survey Responses by Owner-Occupied Homes\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Owners Insurance-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Home Title-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Home Built Before 1979-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Homestead Exemption-1.png){width=2700}\n:::\n:::\n\n\n## Survey Responses by Renter-Occupied Homes\n\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Renters Insurance-1.png){width=2700}\n:::\n:::\n\n::: {.cell}\n::: {.cell-output-display}\n![](index_files/figure-html/Households by Rent Lease-1.png){width=2700}\n:::\n:::",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

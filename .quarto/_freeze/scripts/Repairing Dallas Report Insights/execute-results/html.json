@@ -1,0 +1,14 @@
+{
+  "hash": "7007c4a601a6f8bc102e789c299002a0",
+  "result": {
+    "markdown": "---\ntitle: \"Repairing Dallas Report Insights\"\nformat: html\neditor: visual\n---\n\n::: {.cell}\n\n:::\n\n\n## Question Summaries and Breakdowns\n\nThis document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity or Children in Home.\n\nNumbers generated in this are intended to be used in a Repairing Dallas report.\n\n#### Survey Responses Above/Below Federal Poverty Line\n\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n```\n# A tibble: 3 × 3\n  incomethreshold     count percent\n  <chr>               <int> <chr>  \n1 Household Above FPL    80 34.9%  \n2 Household Below FPL   137 59.8%  \n3 <NA>                   12 5.2%   \n```\n:::\n:::\n\n\n#### Above/Below Federal Poverty Line by Race/Ethnicity\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n```\n# A tibble: 5 × 4\n  race                      `Above FPL` `Below FPL`  `NA`\n  <chr>                           <int>       <int> <int>\n1 Black or African American          16          34     4\n2 Hispanic or Latino                 10          31     1\n3 No Response                         6          18     7\n4 Other                               2           3     0\n5 White Non-Hispanic                 46          51     0\n```\n:::\n:::\n\n#### Above/Below Federal Poverty Line by Children in Home\n\n::: {.cell}\n::: {.cell-output .cell-output-stdout}\n```\n# A tibble: 2 × 4\n  children    `Above FPL` `Below FPL`  `NA`\n  <chr>             <int>       <int> <int>\n1 Children             41          78     4\n2 No Children          39          59     8\n```\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

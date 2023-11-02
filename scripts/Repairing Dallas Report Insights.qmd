@@ -1,0 +1,57 @@
+---
+title: "Repairing Dallas Report Insights"
+format: html
+editor: visual
+---
+
+```{r}
+#| echo: false
+library(tidyverse)
+library(sf)
+library(rio)
+
+libDB <- "C:/Users/Michael/CPAL Dropbox/"
+
+repairPivot <- rio::import(paste0(libDB, "Housing/04_Projects/Repairing Dallas/Data/Repairing Dallas Survey Responses - Geocode.csv"))
+
+```
+
+## Question Summaries and Breakdowns
+
+This document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity or Children in Home.
+
+Numbers generated in this are intended to be used in a Repairing Dallas report.
+
+#### Survey Responses Above/Below Federal Poverty Line
+
+```{r}
+#| echo: false
+repairPivot %>%
+  group_by(incomethreshold) %>%
+  summarize(count = n()) %>%
+  mutate(percent = scales::percent(count/sum(count), accuracy = 0.1)) %>%
+  mutate(incomethreshold = ifelse(incomethreshold == TRUE, "Household Below FPL", "Household Above FPL"))
+```
+
+#### Above/Below Federal Poverty Line by Race/Ethnicity
+```{r}
+#| echo: false
+
+repairPivot %>%
+  group_by(incomethreshold, race) %>%
+  summarize(count = n()) %>%
+  mutate(incomethreshold = ifelse(incomethreshold == TRUE, "Below FPL", "Above FPL")) %>%
+  pivot_wider(names_from = incomethreshold, values_from = count, values_fill = 0)
+```
+#### Above/Below Federal Poverty Line by Children in Home
+```{r}
+#| echo: false
+
+repairPivot %>%
+  mutate(children = ifelse(tot_u18 > 0, "No Children", "Children")) %>%
+  group_by(incomethreshold, children) %>%
+  summarize(count = n()) %>%
+  mutate(incomethreshold = ifelse(incomethreshold == TRUE, "Below FPL", "Above FPL")) %>%
+  pivot_wider(names_from = incomethreshold, values_from = count, values_fill = 0)
+```
+

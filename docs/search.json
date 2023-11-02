@@ -1,0 +1,58 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Repairing Dallas Report Insights",
+    "section": "",
+    "text": "This document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity.\nWhite Non-Hispanic, Hispanic or Latino, and Black or African American are the main groups being shown on these images, because other groups only accounted for a total of 5 responses and were thusly excluded.\nNumbers generated in this are intended to be used in a Repairing Dallas report."
+  },
+  {
+    "objectID": "index.html#survey-responses-by-demographics",
+    "href": "index.html#survey-responses-by-demographics",
+    "title": "Repairing Dallas Report Insights",
+    "section": "Survey Responses by Demographics",
+    "text": "Survey Responses by Demographics"
+  },
+  {
+    "objectID": "index.html#survey-responses-by-safety-items",
+    "href": "index.html#survey-responses-by-safety-items",
+    "title": "Repairing Dallas Report Insights",
+    "section": "Survey Responses by Safety Items",
+    "text": "Survey Responses by Safety Items"
+  },
+  {
+    "objectID": "index.html#survey-responses-by-home-status",
+    "href": "index.html#survey-responses-by-home-status",
+    "title": "Repairing Dallas Report Insights",
+    "section": "Survey Responses by Home Status",
+    "text": "Survey Responses by Home Status"
+  },
+  {
+    "objectID": "index.html#survey-responses-by-owner-occupied-homes",
+    "href": "index.html#survey-responses-by-owner-occupied-homes",
+    "title": "Repairing Dallas Report Insights",
+    "section": "Survey Responses by Owner-Occupied Homes",
+    "text": "Survey Responses by Owner-Occupied Homes"
+  },
+  {
+    "objectID": "index.html#survey-responses-by-renter-occupied-homes",
+    "href": "index.html#survey-responses-by-renter-occupied-homes",
+    "title": "Repairing Dallas Report Insights",
+    "section": "Survey Responses by Renter-Occupied Homes",
+    "text": "Survey Responses by Renter-Occupied Homes"
+  },
+  {
+    "objectID": "scripts/Repairing Dallas Report Insights.html",
+    "href": "scripts/Repairing Dallas Report Insights.html",
+    "title": "Repairing Dallas Report Insights",
+    "section": "",
+    "text": "This document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity or Children in Home.\nNumbers generated in this are intended to be used in a Repairing Dallas report.\n\n\n\n\n# A tibble: 3 × 3\n  incomethreshold     count percent\n  &lt;chr&gt;               &lt;int&gt; &lt;chr&gt;  \n1 Household Above FPL    80 34.9%  \n2 Household Below FPL   137 59.8%  \n3 &lt;NA&gt;                   12 5.2%   \n\n\n\n\n\n\n\n# A tibble: 5 × 4\n  race                      `Above FPL` `Below FPL`  `NA`\n  &lt;chr&gt;                           &lt;int&gt;       &lt;int&gt; &lt;int&gt;\n1 Black or African American          16          34     4\n2 Hispanic or Latino                 10          31     1\n3 No Response                         6          18     7\n4 Other                               2           3     0\n5 White Non-Hispanic                 46          51     0\n\n\n\n\n\n\n\n# A tibble: 2 × 4\n  children    `Above FPL` `Below FPL`  `NA`\n  &lt;chr&gt;             &lt;int&gt;       &lt;int&gt; &lt;int&gt;\n1 Children             41          78     4\n2 No Children          39          59     8"
+  },
+  {
+    "objectID": "scripts/Repairing Dallas Report Insights.html#question-summaries-and-breakdowns",
+    "href": "scripts/Repairing Dallas Report Insights.html#question-summaries-and-breakdowns",
+    "title": "Repairing Dallas Report Insights",
+    "section": "",
+    "text": "This document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity or Children in Home.\nNumbers generated in this are intended to be used in a Repairing Dallas report.\n\n\n\n\n# A tibble: 3 × 3\n  incomethreshold     count percent\n  &lt;chr&gt;               &lt;int&gt; &lt;chr&gt;  \n1 Household Above FPL    80 34.9%  \n2 Household Below FPL   137 59.8%  \n3 &lt;NA&gt;                   12 5.2%   \n\n\n\n\n\n\n\n# A tibble: 5 × 4\n  race                      `Above FPL` `Below FPL`  `NA`\n  &lt;chr&gt;                           &lt;int&gt;       &lt;int&gt; &lt;int&gt;\n1 Black or African American          16          34     4\n2 Hispanic or Latino                 10          31     1\n3 No Response                         6          18     7\n4 Other                               2           3     0\n5 White Non-Hispanic                 46          51     0\n\n\n\n\n\n\n\n# A tibble: 2 × 4\n  children    `Above FPL` `Below FPL`  `NA`\n  &lt;chr&gt;             &lt;int&gt;       &lt;int&gt; &lt;int&gt;\n1 Children             41          78     4\n2 No Children          39          59     8"
+  }
+]

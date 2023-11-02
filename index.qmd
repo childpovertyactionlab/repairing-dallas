@@ -1,0 +1,781 @@
+---
+title: "Repairing Dallas Report Insights"
+---
+
+```{r, Load Data}
+#| include: FALSE
+#| 
+#####  Load Libraries #####
+library(tidycensus)
+library(tidyverse)
+library(rio)
+library(sf)
+library(cpaltemplates)
+library(plotly)
+library(DT)
+
+#datalib <- "E:/CPAL Dropbox/" # Michael Desktop Directory
+datalib <- "C:/Users/Michael/CPAL Dropbox/" # Michael Laptop Directory
+
+repair <- rio::import("data/Repairing Dallas Survey Responses - Geocode.csv") %>%
+    mutate(flag_u18 = ifelse(tot_u18 > 0, TRUE, FALSE))
+
+# function to calculate percentages against two groups
+calculate_percentages <- function(data, group_col1, group_col2) {
+  result <- data %>%
+    filter(!is.na({{group_col1}})) %>%
+    group_by({{group_col1}}, {{group_col2}}) %>%
+    summarize(count = n()) %>%
+    group_by({{group_col2}}) %>%
+    mutate(percent = count / sum(count))
+  
+  all_responses <- data %>%
+    filter(!is.na({{group_col1}})) %>%
+    group_by({{group_col1}}) %>%
+    summarize(count = n()) %>%
+    mutate(percent = count / sum(count),
+           {{ group_col2 }} := "All Responses")
+  
+  result <- bind_rows(result, all_responses)
+  
+  return(result)
+}
+
+repairSummer <- repair %>%
+  select(race, tempsummer) %>%
+  separate(tempsummer, into = c("item1", "item2", "item3", "item4", "item5", "item6"), sep = ",", fill = "right") %>%
+  pivot_longer(cols = item1:item6, values_to = "tempsummer") %>%
+  filter(!is.na(tempsummer)) %>%
+  select(-name) %>%
+  mutate(tempsummer = case_when(tempsummer == "A central air conditioning unit (Una unidad central de aire acondicionado.)" ~ "Central A/C",
+                                tempsummer == "Box fans/fans that are plugged in (Ventiladores de caja/ventiladores que están enchufados.)" ~ "Box Fans",
+                                tempsummer == " A central air conditioning unit (Una unidad central de aire acondicionado.)" ~ "Central A/C",
+                                tempsummer == "" ~ "No Response",
+                                tempsummer == " Window air conditioning unit(s) (Unidad(es) de aire acondicionado de ventana.)" ~ "Window A/C",
+                                tempsummer == " Ceiling fans (Ventiladores de techo.)" ~ "Ceiling Fans",
+                                tempsummer == " Box fans/fans that are plugged in (Ventiladores de caja/ventiladores que están enchufados.)" ~ "Box Fans",
+                                tempsummer == " Opening windows (Abriendo las ventanas.)" ~ "Opening Windows",
+                                tempsummer == "Opening windows (Abriendo las ventanas.)" ~ "Opening Windows",
+                                tempsummer == "Window air conditioning unit(s) (Unidad(es) de aire acondicionado de ventana.)" ~ "Window A/C",
+                                tempsummer == "Ceiling fans (Ventiladores de techo.)" ~ "Ceiling Fans",
+                                tempsummer == "E" ~ "No Response"
+                                ))
+
+repairWinter <- repair %>%
+  select(race, tempwinter) %>%
+  separate(tempwinter, into = c("item1", "item2", "item3", "item4", "item5", "item6"), sep = ",", fill = "right") %>%
+  pivot_longer(cols = item1:item6, values_to = "tempwinter") %>%
+  filter(!is.na(tempwinter)) %>%
+  select(-name) %>%
+  mutate(tempwinter = case_when(tempwinter == "A central heating unit (Una unidad de calefacción central.)" ~ "Central Heat",
+                                tempwinter == " A central heating unit (Una unidad de calefacción central.)" ~ "Central Heat",
+                                tempwinter == "Space heaters (Calentadores de espacio.)" ~ "Space Heaters",
+                                tempwinter == " Space heaters (Calentadores de espacio.)" ~ "Space Heaters",
+                                tempwinter == " Towel on doors" ~ "Towel on Doors",
+                                tempwinter == "Towel on doors" ~ "Towel on Doors",
+                                tempwinter == " Radiators (Radiadores.)" ~ "Radiators",
+                                tempwinter == "Radiators (Radiadores.)" ~ "Radiators",
+                                tempwinter == "Stove" ~ "Kitchen Stove",
+                                tempwinter == "Wood Stove" ~ "Kitchen Stove",
+                                tempwinter == "Furnace and stove" ~ "Kitchen Stove",
+                                tempwinter == "My kitchen stove" ~ "Kitchen Stove",
+                                tempwinter == "Calentador de gas" ~ "Gas Heater",
+                                tempwinter == "Gas geater" ~ "Gas Heater",
+                                tempwinter == "Radiators (Radiadores.)" ~ "Radiator",
+                                tempwinter == "Fireplace (Chimenea.)" ~ "Fireplace",
+                                tempwinter == "None" ~ "Nothing",
+                                tempwinter == " By" ~ ""
+                                )) %>%
+  filter(tempwinter != "") %>%
+  filter(!is.na(tempwinter))
+```
+
+#### Question Summaries and Breakdowns
+
+This document is intended to breakdown all Repairing Dallas questions by overall responses and breakdowns by Race/Ethnicity.
+
+White Non-Hispanic, Hispanic or Latino, and Black or African American are the main groups being shown on these images, because other groups only accounted for a total of 5 responses and were thusly excluded.
+
+Numbers generated in this are intended to be used in a Repairing Dallas report.
+
+## Survey Responses by Demographics
+
+```{r, Households by Poverty}
+question1 <- calculate_percentages(data = repair, group_col1 = incomethreshold, group_col2 = race) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  mutate(group = case_when(
+    is.na(incomethreshold) ~ "No Response",
+    incomethreshold == TRUE ~ "Household Below FPL",
+    incomethreshold == FALSE ~ "Household Above FPL")) %>%
+  mutate(group = factor(group, levels = c("Household Below FPL", "Household Above FPL", "No Response"))) %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Households Above or Below the Federal Poverty Line",
+                     width = 75),
+          question1, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Children}
+question2 <- calculate_percentages(data = repair, group_col1 = flag_u18, group_col2 = race) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  mutate(group = case_when(
+    is.na(flag_u18) ~ "No Response",
+    flag_u18 == TRUE ~ "Yes",
+    flag_u18 == FALSE ~ "No")) %>%
+#  mutate(group = factor(group, levels = c("Household Below FPL", "Household Above FPL", "No Response"))) %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Households with Children",
+                     width = 75),
+          question2, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Over 65}
+question11 <- calculate_percentages(data = repair, group_col1 = over65, group_col2 = race) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  mutate(group = case_when(
+    is.na(over65) ~ "No Response",
+    over65 == TRUE ~ "Over 65 in Home",
+    over65 == FALSE ~ "No Over 65 in Home")) %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Households with Elderly (Over 65) in Home",
+                     width = 75),
+          question11, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Under 6}
+question12 <- calculate_percentages(data = repair, group_col1 = frequent_u6, group_col2 = race) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  mutate(group = case_when(
+    is.na(frequent_u6) ~ "No Response",
+    frequent_u6 == TRUE ~ "Under 6 in Home",
+    frequent_u6 == FALSE ~ "No Under 6 in Home")) %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Households with Young Child (Under 6) in Home",
+                     width = 75),
+          question12, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+## Survey Responses by Safety Items
+
+```{r, Households by CO Detector}
+question3 <- repair %>%
+  select(safety_carbonmono, race) %>%
+  mutate(group = case_when(safety_carbonmono == "Yes (Si.)" ~ "Yes",
+                           safety_carbonmono == "No (No.)" ~ "No",
+                           safety_carbonmono == "Unsure (No estoy seguro.)" ~ "Unsure", 
+                           safety_carbonmono == "" ~ "No Response")) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+#  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Carbon Monoxide Detector in Home",
+                     width = 75),
+          question3, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Fire Extinguisher}
+question4 <- repair %>%
+  mutate(group = ifelse(safety_extinguisher == "Yes (Si.)", "Yes",
+                        ifelse(safety_extinguisher == "No (No.)", "No",
+                               ifelse(safety_extinguisher == "Unsure (No estoy seguro.)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Fire Extinguisher in Home",
+                     width = 75),
+          question4, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Smoke Detector}
+question5 <- repair %>%
+  mutate(group = ifelse(safety_smoke == "Yes (Si)", "Yes",
+                        ifelse(safety_smoke == "No (No)", "No",
+                               ifelse(safety_smoke == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Smoke Detector in Home",
+                     width = 75),
+          question5, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Air Filter}
+question17 <- repair %>%
+  mutate(group = case_when(
+    is.na(airfilter) ~ "No Response",
+    airfilter == TRUE ~ "Yes",
+    airfilter == FALSE ~ "No")) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Do you change your air filter?",
+                     width = 75),
+          question17, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+## Survey Responses by Home Status
+```{r, Households by Home Status}
+question6 <- calculate_percentages(data = repair, group_col1 = home_status, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  mutate(group = ifelse(str_detect(home_status, "Rented by you"), "Rented by Occupant",
+                        ifelse(str_detect(home_status, "Owned by you or someone in this household with a mortgage or loan"), "Owned, but not Paid Off",
+                               ifelse(str_detect(home_status, "Owned by you or someone in this household free and clear"), "Owned and Paid Off", "ERROR")))) %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "What is the status of your home?",
+                     width = 75),
+          question6, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Temperature Control in Summer}
+question9 <- repairSummer %>%
+  calculate_percentages(group_col1 = tempsummer, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = tempsummer)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = ifelse(percent >= 0.05, paste0(round(percent*100, digits = 0), "%"), "")),
+            position = position_stack(vjust = 0.5),
+            color = palette_cpal_main[3],
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_orange) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Temperature Control in Summer",
+                     width = 75),
+          question9, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Temperature Control in Winter}
+question10 <- repairWinter %>%
+  calculate_percentages(group_col1 = tempwinter, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = tempwinter)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = ifelse(percent >= 0.05, paste0(round(percent*100, digits = 0), "%"), "")),
+            position = position_stack(vjust = 0.5),
+            color = palette_cpal_main[3],
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_teal) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Temperature Control in Winter",
+                     width = 75),
+          question10, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+## Survey Responses by Owner-Occupied Homes
+
+```{r, Households by Owners Insurance}
+question8 <- repair %>%
+  filter(str_detect(home_status, "Owned by you")) %>%
+  mutate(group = ifelse(home_insurance == "Yes (Si)", "Yes",
+                        ifelse(home_insurance == "No (No)", "No",
+                               ifelse(home_insurance == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Do you have renters insurance?",
+                     width = 75),
+          question8, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Home Title}
+question13 <- repair %>%
+  filter(str_detect(home_status, "Owned by you")) %>%
+  mutate(group = ifelse(home_title == "Yes (Si)", "Yes",
+                        ifelse(home_title == "No (No)", "No",
+                               ifelse(home_title == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Do you have your homes title?",
+                     width = 75),
+          question13, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Home Built Before 1979}
+question14 <- repair %>%
+  filter(str_detect(home_status, "Owned by you")) %>%
+  mutate(group = ifelse(home_1979 == "Yes (Si)", "Yes",
+                        ifelse(home_1979 == "No (No)", "No",
+                               ifelse(home_1979 == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Home Built Before 1979",
+                     width = 75),
+          question14, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Homestead Exemption}
+question15 <- repair %>%
+  filter(str_detect(home_status, "Owned by you")) %>%
+  mutate(group = ifelse(homesteadexempt == "Yes (Si)", "Yes",
+                        ifelse(homesteadexempt == "No (No)", "No",
+                               ifelse(homesteadexempt == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+    guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Homestead Exemption on Home",
+                     width = 75),
+          question15, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+## Survey Responses by Renter-Occupied Homes
+
+```{r, Households by Renters Insurance}
+question7 <- repair %>%
+  filter(str_detect(home_status, "Rented by you")) %>%
+  mutate(group = ifelse(rent_insurance == "Yes (Si.)", "Yes",
+                        ifelse(rent_insurance == "No (No)", "No",
+                               ifelse(rent_insurance == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Do you have renters insurance?",
+                     width = 75),
+          question7, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
+
+```{r, Households by Rent Lease}
+question16 <- repair %>%
+  filter(str_detect(home_status, "Rented by you")) %>%
+  mutate(group = ifelse(rent_lease == "Yes (Si)", "Yes",
+                        ifelse(rent_lease == "No (No)", "No",
+                               ifelse(rent_lease == "Unsure (No estoy seguro)", "Unsure", "No Response")))) %>%
+  filter(group != "No Response") %>%
+  calculate_percentages(group_col1 = group, group_col2 = race) %>%
+  ungroup(.) %>%
+  mutate(race = factor(race, levels = c("All Responses", 
+                                        "Black or African American",
+                                        "Hispanic or Latino",
+                                        "White Non-Hispanic",
+                                        "Other",
+                                        "No Response"))) %>%
+  filter(race != "Other") %>%
+  ggplot(aes(x = percent, y = fct_rev(as_factor(race)), fill = group)) +
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent*100, digits = 0), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "#FFFFFF",
+            fontface = "bold") +
+  scale_fill_manual(values = palette_cpal_main) +
+  labs(x = "",
+       y = "") +
+  theme_cpal_print() +
+  remove_axis(axis = "x") +
+  remove_ticks() +
+  guides(fill = guide_legend(reverse = TRUE))
+
+cpal_plot(zeroGrob(),
+          cpal_title(string = "Current Rental Lease on Home",
+                     width = 75),
+          question16, 
+          zeroGrob(),
+          cpal_logo_text(), 
+          ncol = 1,
+          heights = c(1, 3, 30, 1, 2))
+
+```
